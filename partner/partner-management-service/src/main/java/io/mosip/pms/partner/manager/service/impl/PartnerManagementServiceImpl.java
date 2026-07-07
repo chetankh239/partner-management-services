@@ -1060,6 +1060,7 @@ public class PartnerManagementServiceImpl implements PartnerManagerService {
 			}
 			String partnerId = parentRequest.getPartner().getId();
 			validateLoggedInUserAuthorization(partnerId);
+			partnerHelper.getValidPartner(partnerId, false);
 
 			List<PartnerPolicyBioextractRequest> rows =
 					partnerPolicyBioextractRequestRepository
@@ -1206,6 +1207,7 @@ public class PartnerManagementServiceImpl implements PartnerManagerService {
 			}
 			String partnerId = parentRequest.getPartner().getId();
 			validateLoggedInUserAuthorization(partnerId);
+			partnerHelper.getValidPartner(partnerId, false);
 
 			Optional<PartnerPolicyCredentialTypeRequest> row =
 					partnerPolicyCredentialTypeRequestRepository

@@ -3475,6 +3475,56 @@ public class PartnerManagementServiceImplTest {
 		org.junit.Assert.assertNull(resp.getResponse().getCredentialType());
 	}
 
+	@Test
+	public void getPartnerPolicyRequestBioExtractors_whenPartnerInactive_returnsError() {
+		Mockito.when(partnerSearchHelper.isLoggedInUserFilterRequired()).thenReturn(false);
+
+		Partner partner = new Partner();
+		partner.setId("partner-1");
+		PartnerPolicyRequest parent = new PartnerPolicyRequest();
+		parent.setId("mapping-1");
+		parent.setStatusCode("InProgress");
+		parent.setPartner(partner);
+
+		when(partnerPolicyRequestRepository.findByReqId("req-1")).thenReturn(parent);
+		when(partnerHelper.getValidPartner(Mockito.eq("partner-1"), Mockito.eq(false))).thenThrow(
+				new io.mosip.pms.partner.exception.PartnerServiceException(
+						PARTNER_NOT_ACTIVE_EXCEPTION.getErrorCode(),
+						PARTNER_NOT_ACTIVE_EXCEPTION.getErrorMessage()));
+
+		io.mosip.pms.partner.response.dto.BioExtractorsResponseWrapperV2 resp =
+				partnerManagementImpl.getPartnerPolicyRequestBioExtractors("req-1");
+
+		assertNotNull(resp.getErrors());
+		assertFalse(resp.getErrors().isEmpty());
+		assertEquals(PARTNER_NOT_ACTIVE_EXCEPTION.getErrorCode(), resp.getErrors().get(0).getErrorCode());
+	}
+
+	@Test
+	public void getPartnerPolicyRequestCredentialTypes_whenPartnerInactive_returnsError() {
+		Mockito.when(partnerSearchHelper.isLoggedInUserFilterRequired()).thenReturn(false);
+
+		Partner partner = new Partner();
+		partner.setId("partner-1");
+		PartnerPolicyRequest parent = new PartnerPolicyRequest();
+		parent.setId("mapping-1");
+		parent.setStatusCode("InProgress");
+		parent.setPartner(partner);
+
+		when(partnerPolicyRequestRepository.findByReqId("req-1")).thenReturn(parent);
+		when(partnerHelper.getValidPartner(Mockito.eq("partner-1"), Mockito.eq(false))).thenThrow(
+				new io.mosip.pms.partner.exception.PartnerServiceException(
+						PARTNER_NOT_ACTIVE_EXCEPTION.getErrorCode(),
+						PARTNER_NOT_ACTIVE_EXCEPTION.getErrorMessage()));
+
+		io.mosip.pms.partner.response.dto.CredentialTypesResponseWrapperV2 resp =
+				partnerManagementImpl.getPartnerPolicyRequestCredentialTypes("req-1");
+
+		assertNotNull(resp.getErrors());
+		assertFalse(resp.getErrors().isEmpty());
+		assertEquals(PARTNER_NOT_ACTIVE_EXCEPTION.getErrorCode(), resp.getErrors().get(0).getErrorCode());
+	}
+
     @Test
     public void submitBioExtractorsRequest_whenChildRowsExist_returnsAlreadyExistsError() {
         String partnerId = "p1";
