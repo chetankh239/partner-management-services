@@ -37,6 +37,7 @@ import io.mosip.pms.common.dto.PartnerCertDownloadResponeDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -428,11 +429,42 @@ public class BatchJobHelper {
 	}
 
 	/**
-	 * Returns false if the MISP license record itself is missing its primary
-	 * key, so the caller can skip notifying for an incomplete/corrupt record.
+	 * Returns false if any MISP license key detail required by the expiry email
+	 * template is missing or garbage, so the caller can skip notifying instead
+	 * of sending an email with null/placeholder values. Rejects both a real
+	 * null/blank value and the literal string "null" left in a text column
+	 * (e.g. misp_id, license_key_name) by a caller that stringified a missing
+	 * value before persisting it, since a blank/null check alone won't catch
+	 * that text.
 	 */
 	public boolean isMispLicenseDetailsCompleteForNotification(MISPLicenseEntityV2 mispLicenseDetails) {
-		return mispLicenseDetails.getMispLicenseId() != null;
+		if (mispLicenseDetails.getMispLicenseId() == null
+				|| isBlankOrLiteralNull(mispLicenseDetails.getMispId())
+				|| mispLicenseDetails.getValidToDate() == null
+				|| isBlankOrLiteralNull(mispLicenseDetails.getLicenseKeyName())) {
+			return false;
+		}
+		if (mispLicenseDetails.getPolicyId() != null) {
+			Optional<AuthPolicy> optionalAuthPolicy = authPolicyRepository.findById(mispLicenseDetails.getPolicyId());
+			if (optionalAuthPolicy.isEmpty() || optionalAuthPolicy.get().getPolicyGroup() == null
+					|| isBlankOrLiteralNull(optionalAuthPolicy.get().getName())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Returns false if the given admin's identity/email needed to address and
+	 * deliver the expiry notification is missing or the literal string "null".
+	 */
+	public boolean isPartnerAdminCompleteForNotification(AdminDetailsDto partnerAdminDetails) {
+		return !isBlankOrLiteralNull(partnerAdminDetails.getUserName())
+				&& !isBlankOrLiteralNull(partnerAdminDetails.getEmailId());
+	}
+
+	private boolean isBlankOrLiteralNull(String value) {
+		return !StringUtils.hasText(value) || "null".equalsIgnoreCase(value.trim());
 	}
 
 	public MISPLicenseKeyDetailsDto populateMispLicenseDetails(int expiryPeriod, MISPLicenseEntityV2 mispLicenseDetails) {

@@ -127,6 +127,11 @@ public class MispLicenseExpiryTasklet implements Tasklet {
 									
 									// Step 7: Send notification to all Partner Admins
 									partnerAdmins.forEach(partnerAdminDetails -> {
+										if (!batchJobHelper.isPartnerAdminCompleteForNotification(partnerAdminDetails)) {
+											log.warn("Skipping MISP License expiry notification for partner admin {} as username/email is missing.",
+													partnerAdminDetails.getUserName());
+											return;
+										}
 										String emailId = partnerAdminDetails.getEmailId();
 										NotificationEntity savedNotification = batchJobHelper.saveNotification(
 												PartnerConstants.MISP_LICENSE_KEY_EXPIRY_NOTIFICATION_TYPE, partnerAdminDetails.getUserName(), partnerAdminDetails.getLangCode(), null, null,
