@@ -37,6 +37,7 @@ import io.mosip.pms.common.dto.PartnerCertDownloadResponeDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -425,6 +426,25 @@ public class BatchJobHelper {
 			apiKeyDetailsDto.setPolicyName(policyName);
 		}
 		return apiKeyDetailsDto;
+	}
+
+	/**
+	 * Returns false if any MISP license key detail required by the expiry email
+	 * template is missing, so the caller can skip notifying with incomplete data.
+	 */
+	public boolean isMispLicenseDetailsCompleteForNotification(MISPLicenseEntityV2 mispLicenseDetails) {
+		if (!StringUtils.hasText(mispLicenseDetails.getMispId()) || mispLicenseDetails.getValidToDate() == null
+				|| !StringUtils.hasText(mispLicenseDetails.getLicenseKeyName())) {
+			return false;
+		}
+		if (mispLicenseDetails.getPolicyId() != null) {
+			Optional<AuthPolicy> optionalAuthPolicy = authPolicyRepository.findById(mispLicenseDetails.getPolicyId());
+			if (optionalAuthPolicy.isEmpty() || optionalAuthPolicy.get().getPolicyGroup() == null
+					|| !StringUtils.hasText(optionalAuthPolicy.get().getName())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public MISPLicenseKeyDetailsDto populateMispLicenseDetails(int expiryPeriod, MISPLicenseEntityV2 mispLicenseDetails) {

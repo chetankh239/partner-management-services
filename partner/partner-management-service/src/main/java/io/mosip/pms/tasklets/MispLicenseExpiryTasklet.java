@@ -91,7 +91,13 @@ public class MispLicenseExpiryTasklet implements Tasklet {
 					}
 	 
 					Partner mispPartner = partnerOptional.get();
-	 
+
+					if (!batchJobHelper.isMispLicenseDetailsCompleteForNotification(mispLicenseDetails)) {
+						log.warn("Skipping notification for MISP License key {} of partner id {} as required license details are missing.",
+								mispLicenseDetails.getMispLicenseId(), mispPartnerId);
+						continue;
+					}
+
 					// Step 4: For each MISP License Key check if it is expiring or not
 					if (mispLicenseDetails.getValidToDate() != null) {
 						log.info("Checking if MISP License key is expiring for partner id {}",
